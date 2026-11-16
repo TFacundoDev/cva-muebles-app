@@ -1,0 +1,55 @@
+# API de respaldo en Render (plan gratis). Usa la misma imagen de Docker que Fly.
+# En Render: New > Blueprint > elegí este repositorio.
+# El plan gratis se duerme tras 15 minutos sin uso y tarda cerca de un minuto
+# en despertar: sirve como respaldo, no como servidor principal.
+services:
+  - type: web
+    name: cva-muebles-api-respaldo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: AUTH_MODE
+        value: supabase
+      - key: STORAGE_DRIVER
+        value: r2
+      - key: DATABASE_SSL
+        value: "true"
+      # En el respaldo las tareas programadas van apagadas, para que el ping
+      # y el backup no se hagan dos veces.
+      - key: RUN_JOBS
+        value: "false"
+      # Estos se cargan a mano en el panel de Render (mismos valores que en Fly,
+      # salvo PUBLIC_API_URL, que es la URL de este servicio).
+      - key: PUBLIC_API_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: WEB_URLS
+        sync: false
+      - key: REVALIDATE_SECRET
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: OWNER_EMAILS
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false

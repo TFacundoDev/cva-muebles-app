@@ -1,0 +1,164 @@
+// Modelo de datos. Cada tabla pertenece a un solo módulo de la API y ese módulo
+// es el único que la lee y la escribe. Las relaciones de abajo existen para que
+// la base tenga claves foráneas; los repositorios no hacen "include" de tablas
+// de otro módulo: le piden los datos al service correspondiente.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+  runtime             = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductStatus {
+  draft
+  published
+  hidden
+}
+
+enum ModelStatus {
+  pending
+  processing
+  ready
+  error
+}
+
+enum ModelSource {
+  upload
+  scan
+  ai
+  custom
+}
+
+enum GalleryStatus {
+  pending
+  approved
+  rejected
+  hidden
+}
+
+enum Role {
+  customer
+  owner
+}
+
+// Módulo categories
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  sortOrder Int       @default(0) @map("sort_order")
+  createdAt DateTime  @default(now()) @map("created_at")
+  products  Product[]
+
+  @@map("categories")
+}
+
+// Módulo products
+model Product {
+  id           String        @id @default(uuid())
+  categoryId   String        @map("category_id")
+  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name         String
+  slug         String        @unique
+  description  String        @default("")
+  price        Decimal?      @db.Decimal(12, 2)
+  widthCm      Int?          @map("width_cm")
+  depthCm      Int?          @map("depth_cm")
+  heightCm     Int?          @map("height_cm")
+  woods        String[]      @default([])
+  materials    String        @default("")
+  status       ProductStatus @default(draft)
+  featured     Boolean       @default(false)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  images       ProductImage[]
+  model3d      Model3d?
+  galleryPosts GalleryPost[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@map("products")
+}
+
+// Módulo media
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String   @map("product_id")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  path      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+// Módulo models3d. Un modelo por producto.
+// glbPath es el modelo que está publicado; status describe el último intento
+// de procesamiento, así un error al reemplazar no deja la ficha sin visor.
+model Model3d {
+  id           String      @id @default(uuid())
+  productId    String      @unique @map("product_id")
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  source       ModelSource
+  status       ModelStatus @default(pending)
+  originalPath String?     @map("original_path")
+  sourceImages String[]    @default([]) @map("source_images")
+  glbPath      String?     @map("glb_path")
+  posterPath   String?     @map("poster_path")
+  sizeBytes    Int?        @map("size_bytes")
+  targetWidth  Int?        @map("target_width_cm")
+  targetDepth  Int?        @map("target_depth_cm")
+  targetHeight Int?        @map("target_height_cm")
+  error        String?
+  warning      String?
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@map("models_3d")
+}
+
+// Módulo users. userId es el id de la cuenta en Supabase Auth.
+model Profile {
+  userId       String        @id @map("user_id")
+  email        String
+  displayName  String        @map("display_name")
+  role         Role          @default(customer)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  galleryPosts GalleryPost[]
+
+  @@map("profiles")
+}
+
+// Módulo gallery
+model GalleryPost {
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  user        Profile       @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  productId   String?       @map("product_id")
+  product     Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  imagePath   String        @map("image_path")
+  caption     String        @default("")
+  status      GalleryStatus @default(pending)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  moderatedAt DateTime?     @map("moderated_at")
+
+  @@index([status, createdAt])
+  @@index([productId])
+  @@index([userId])
+  @@map("gallery_posts")
+}
+
+// Módulo store
+model Setting {
+  key   String @id
+  value String
+
+  @@map("settings")
+}

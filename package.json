@@ -1,0 +1,22 @@
+{
+  "name": "cva-muebles",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tienda de muebles con catálogo 3D, AR y galería de clientes",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "bootstrap": "pnpm install && pnpm --filter @cva/shared build && pnpm db:generate",
+    "dev": "pnpm --filter @cva/shared build && pnpm --parallel --filter @cva/shared --filter @cva/api --filter @cva/web dev",
+    "build": "pnpm --filter @cva/shared build && pnpm --filter @cva/api build && pnpm --filter @cva/web build",
+    "build:api": "pnpm --filter @cva/shared build && pnpm --filter @cva/api build",
+    "build:web": "pnpm --filter @cva/shared build && pnpm --filter @cva/web build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @cva/api db:generate",
+    "db:migrate": "pnpm --filter @cva/api db:migrate",
+    "db:seed": "pnpm --filter @cva/api db:seed"
+  }
+}

@@ -1,0 +1,36 @@
+# API principal en Fly.io. Desde la raíz del repo:
+#   fly launch --no-deploy --copy-config    (la primera vez; elegí el nombre de la app)
+#   fly secrets set DATABASE_URL=... DIRECT_URL=... (ver README)
+#   fly deploy
+app = "cva-muebles-api"   # cambialo por el nombre de tu app
+primary_region = "gru"    # São Paulo, la región más cercana a Corrientes
+
+[build]
+  dockerfile = "apps/api/Dockerfile"
+
+# Lo que no es secreto va acá; lo secreto, con "fly secrets set".
+[env]
+  NODE_ENV = "production"
+  PORT = "3001"
+  AUTH_MODE = "supabase"
+  STORAGE_DRIVER = "r2"
+  DATABASE_SSL = "true"
+  RUN_JOBS = "true"          # este es el servidor principal: corre el ping y el backup
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = "off"   # siempre encendida: sin arranques en frío
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/health"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "40s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

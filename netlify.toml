@@ -1,0 +1,9 @@
+# Web de respaldo en Netlify. Mismo repositorio y mismas variables que en Vercel.
+# No se le apunta el dominio hasta que haga falta (ver README, "Plan B").
+[build]
+  base = "apps/web"
+  command = "cd ../.. && pnpm build:web"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"

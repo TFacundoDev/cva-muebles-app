@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.next
+**/.env
+**/.env.*
+!**/.env.example
+apps/api/storage
+apps/api/storage-backups
+apps/api/src/generated
+.git

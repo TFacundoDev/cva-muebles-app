@@ -1,0 +1,48 @@
+# Desarrollo local.
+#   docker compose up -d db             -> solo la base (lo habitual: la API y la web corren con pnpm dev)
+#   docker compose --profile api up     -> además levanta la API dentro de Docker, igual que en producción
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cva_muebles
+    ports:
+      - "5433:5432"
+    volumes:
+      - cva_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cva_muebles"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    profiles: ["api"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      PUBLIC_API_URL: http://localhost:3001
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/cva_muebles
+      CORS_ORIGINS: http://localhost:3000
+      WEB_URLS: http://host.docker.internal:3000
+      REVALIDATE_SECRET: secreto-local
+      AUTH_MODE: dev
+      OWNER_EMAILS: dueno@cva.test
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /data/storage
+    ports:
+      - "3001:3001"
+    volumes:
+      - cva_storage:/data
+
+volumes:
+  cva_pgdata:
+  cva_storage:

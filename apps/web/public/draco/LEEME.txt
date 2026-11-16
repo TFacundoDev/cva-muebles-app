@@ -1,0 +1,5 @@
+Decodificador Draco (Google, licencia Apache 2.0), copiado del paquete "three".
+El visor 3D lo necesita para abrir los modelos comprimidos. Se sirve desde acá
+para no depender de un servidor externo. Si se actualiza @google/model-viewer,
+conviene volver a copiar estos tres archivos desde
+node_modules/three/examples/jsm/libs/draco/gltf/.
